@@ -11,7 +11,7 @@ const User = db.User
 const routes = require('./routes')
 
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  secret: 'ThisIsNotYourSecret',
   resave: false,
   saveUninitialized: true
 }))
