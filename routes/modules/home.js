@@ -12,7 +12,7 @@ router.get('/', (req, res) => {
       if (!user) throw new Error('user not found!')
       return Todo.findAll({
         raw: true,
-        nest: false,
+        nest: true,
         where: { UserId }
       })
         .then(todos => res.render('index', { todos }))
