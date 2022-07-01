@@ -5,7 +5,6 @@ const Todo = db.Todo
 const User = db.User
 
 router.get('/', (req, res) => {
-  console.log(req)
   const UserId = req.user.id
   User.findByPk(UserId)
     .then(user => {

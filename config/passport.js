@@ -61,7 +61,7 @@ module.exports = app => {
         if (!user) {
           return done(null, false)
         }
-        user = user.JSON()
+        user = user.toJSON()
         return done(null, user)
       })
       .catch(err => console.log(err))

@@ -29,6 +29,8 @@ app.use(methodOverride('_method'))
 app.engine('hbs', engine({ defaultLayout: 'main', extname: '.hbs' }))
 app.set('view engine', 'hbs')
 
+app.use(express.static("public"))
+
 app.use(flash())
 
 app.use((req, res, next) => {

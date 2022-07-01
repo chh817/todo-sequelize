@@ -3,17 +3,6 @@ const router = express.Router()
 const db = require('../../models')
 const Todo = db.Todo
 
-router.get('/:id', (req, res) => {
-  const id = req.params.id
-  const UserId = req.user.id
-  return Todo.findOne({ where: { id, UserId } })
-    .then(todo => {
-      if (!todo) throw new Error('todo not found!')
-      return res.render('detail', { todo: todo.JSON() })
-    })
-    .catch(err => console.log(err))
-})
-
 router.get('/create', (req, res) => res.render('create'))
 
 router.post('/', (req, res) => {
@@ -23,13 +12,25 @@ router.post('/', (req, res) => {
     .then(() => res.redirect('/'))
     .catch(err => console.log(err))
 })
+
+router.get('/:id', (req, res) => {
+  const id = req.params.id
+  const UserId = req.user.id
+  return Todo.findOne({ where: { id, UserId } })
+    .then(todo => {
+      if (!todo) throw new Error('todo not found!')
+      return res.render('detail', { todo: todo.toJSON() })
+    })
+    .catch(err => console.log(err))
+})
+
 router.get('/:id/edit', (req, res) => {
   const id = req.params.id
   const UserId = req.user.id
   return Todo.findOne({ where: { id, UserId } })
     .then(todo => {
       if (!todo) throw new Error('todo not found!')
-      return res.render('edit', { todo: todo.JSON() })
+      return res.render('edit', { todo: todo.toJSON() })
     })
     .catch(err => console.log(err))
 })
@@ -40,12 +41,14 @@ router.put('/:id', (req, res) => {
   const { name, isDone } = req.body
   return Todo.findOne({ where: { id, UserId } })
     .then(todo => {
-      if (!todo) throw new Error('todo not found!')
-      todo.name = name
-      todo.isDone = isDone === 'on'
-      return Todo.save()
+      if (todo) {
+        todo.name = name
+        todo.isDone = isDone === 'on'
+        return todo.save()
+      }
+      throw new Error('todo not found!')
     })
-    .then(() => res.redirect('/todos/${id}'))
+    .then(() => res.redirect(`/todos/${id}`))
     .catch(err => console.log(err))
 })
 
@@ -54,9 +57,10 @@ router.delete('/:id', (req, res) => {
   const UserId = req.user.id
   return Todo.findOne({ where: { id, UserId } })
     .then(todo => {
-      if (!todo) throw new Error('todo not found!')
-      return todo.destroy()
+      if (todo) return todo.destroy()
+      throw new Error('todo not found!')
     })
+    .then(() => res.redirect('/'))
     .catch(err => console.log(err))
 })
 
