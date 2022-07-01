@@ -5,6 +5,9 @@ const methodOverride = require('method-override')
 const app = express()
 const usePassport = require('./config/passport')
 const PORT = 3000 || process.env.PORT
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config()
+}
 const db = require('./models')
 const Todo = db.Todo
 const User = db.User
@@ -12,7 +15,7 @@ const flash = require('connect-flash')
 const routes = require('./routes')
 
 app.use(session({
-  secret: 'ThisIsNotYourSecret',
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: true
 }))
