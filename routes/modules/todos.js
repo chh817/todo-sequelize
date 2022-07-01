@@ -14,4 +14,14 @@ router.get('/:id', (req, res) => {
     .catch(err => console.log(err))
 })
 
+router.get('/create', (req, res) => res.render('create'))
+
+router.post('/', (req, res) => {
+  const UserId = req.user.id
+  const { name } = req.body
+  return Todo.create({ name, UserId })
+    .then(() => res.redirect('/'))
+    .catch(err => console.log(err))
+})
+
 module.exports = router
