@@ -6,6 +6,19 @@ const User = db.User
 
 router.get('/', (req, res) => {
   console.log(req)
+  const UserId = req.user.id
+  User.findByPk(UserId)
+    .then(user => {
+      if (!user) throw new Error('user not found!')
+      return Todo.findAll({
+        raw: true,
+        nest: false,
+        where: { UserId }
+      })
+        .then(todos => res.render('index', { todos }))
+        .catch(err => console.log(err))
+    })
+    .catch(err => console.log(err))
 })
 
 module.exports = router
