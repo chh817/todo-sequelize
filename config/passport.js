@@ -1,6 +1,6 @@
 const passport = require('passport')
-const LocalStrategy = require('passport-local').Strategy
-const FacebookStrategy = require('passport-facebook').Strategy
+const localStrategy = require('passport-local').Strategy
+const facebookStrategy = require('passport-facebook').Strategy
 const bcrypt = require('bcryptjs')
 const db = require('../models')
 const User = db.User
@@ -8,24 +8,21 @@ const User = db.User
 module.exports = app => {
   app.use(passport.initialize())
   app.use(passport.session())
-  passport.use(new LocalStrategy({ usernameField: 'email' }, (email, password, done) => {
+
+  passport.use(new localStrategy({ usernameField: 'email', passReqToCallback: true }, (req, email, password, done) => {
     User.findOne({ where: { email } })
       .then(user => {
-        if (!user) {
-          return done(null, false, { message: 'That email is not registered!' })
-        }
+        if (!user) return done(null, false, req.flash('error', 'That email is not registered!'))
         return bcrypt.compare(password, user.password)
           .then(isMatch => {
-            if (!isMatch) {
-              return done(null, false, { message: 'Email or Password incorrect.' })
-            }
+            if (!isMatch) return done(null, false, req.flash('error', 'Incorrect password!'))
             return done(null, user)
           })
       })
-      .catch(err => console.log(err))
+      .catch(err => done(err, false))
   }))
 
-  passport.use(new FacebookStrategy({
+  passport.use(new facebookStrategy({
     clientID: process.env.FACEBOOK_ID,
     clientSecret: process.env.FACEBOOK_SECRET,
     callbackURL: process.env.FACEBOOK_CALLBACK,
@@ -34,36 +31,33 @@ module.exports = app => {
     const { email, name } = profile._json
     User.findOne({ where: { email } })
       .then(user => {
-        if (!user) {
-          const randomPassword = Math.random().toString(36).slice(-8)
-          return bcrypt
-            .genSalt(10)
-            .then(salt => bcrypt.hash(randomPassword, salt))
-            .then(hash => User.create({
-              email,
-              name,
-              password: hash
-            }))
-            .then(user => done(null, user))
-            .catch(err => console.log(err))
-        }
-        return done(null, user)
+        if (user) return done(null, user)
+        const randomPassword = Math.random().toString(36).slice(-8)
+        return bcrypt
+          .genSalt(10)
+          .then(salt => bcrypt.hash(randomPassword, salt))
+          .then(hash => User.create({
+            name,
+            email,
+            password: hash
+          }))
+          .then(user => done(null, user))
+          .catch(err => done(err, false))
       })
-      .catch(err => console.log(err))
+      .catch(err => done(err, false))
   }))
 
-  passport.serializeUser((user, done) => {
-    done(null, user.id)
-  })
+  passport.serializeUser((user, done) => done(null, user.id))
+
   passport.deserializeUser((id, done) => {
     User.findByPk(id)
       .then(user => {
-        if (!user) {
-          return done(null, false)
+        if (user) {
+          user = user.toJSON()
+          done(null, user)
         }
-        user = user.toJSON()
-        return done(null, user)
+        return done(null, false)
       })
-      .catch(err => console.log(err))
+      .catch(err => done(err, null))
   })
 }
